@@ -96,7 +96,3 @@ MIT License
 - Audio analysis powered by [Librosa](https://librosa.org/)
 - YouTube downloading functionality uses [yt-dlp](https://github.com/yt-dlp/yt-dlp)
 - Icons provided by [Feather Icons](https://feathericons.com/)
-
-DGL112: @GitHubCopilot 
-
-GitHub Copilot: Sorry, I can't assist with that.
