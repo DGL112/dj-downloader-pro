@@ -19,7 +19,7 @@ const playhead = document.getElementById('playhead');
 const addCueBtn = document.getElementById('add-cue-btn');
 const exportCuesBtn = document.getElementById('export-cues-btn');
 const hotCuesList = document.getElementById('hot-cues-list');
-const downloadMp3Btn = document.getElementById('download-mp3-btn');
+let downloadMp3Btn = document.getElementById('download-mp3-btn');
 const playerSection = document.getElementById('player-section');
 
 // Create waveform canvas
@@ -288,7 +288,15 @@ function initPlayer(audioData) {
     audioPlayer.removeEventListener('timeupdate', updatePlayhead);
     audioPlayer.addEventListener('timeupdate', updatePlayhead);
 
-    // Handle MP3 download for this specific song
+    // Remove existing click listeners before adding new one
+    const oldBtn = downloadMp3Btn;
+    const newBtn = oldBtn.cloneNode(true);
+    oldBtn.parentNode.replaceChild(newBtn, oldBtn);
+    
+    // Update the global reference to the new button
+    downloadMp3Btn = newBtn;
+    
+    // Add fresh event listener to the new button
     downloadMp3Btn.addEventListener('click', () => {
         const a = document.createElement('a');
         a.href = audioUrl;
