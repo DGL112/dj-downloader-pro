@@ -6,6 +6,10 @@ let audioBuffer;
 let isPlaying = false;
 let hotCues = [];
 let bpmValue = 0;
+let currentVolume = 0.8; // Default volume
+let isMuted = false;
+let previousVolume = 0.8; // Store volume before muting
+let isWaveformExpanded = false; // Track if waveform is expanded
 
 // DOM elements
 const audioPlayer = document.getElementById('audio-player');
@@ -21,6 +25,14 @@ const exportCuesBtn = document.getElementById('export-cues-btn');
 const hotCuesList = document.getElementById('hot-cues-list');
 let downloadMp3Btn = document.getElementById('download-mp3-btn');
 const playerSection = document.getElementById('player-section');
+const volumeSlider = document.getElementById('volume-slider');
+const volumePercentage = document.getElementById('volume-percentage');
+const muteBtn = document.getElementById('mute-btn');
+const playerSectionWrapper = document.getElementById('player-section-wrapper');
+const toggleWaveformBtn = document.getElementById('toggle-waveform-btn');
+
+// Set initial volume
+audioPlayer.volume = currentVolume;
 
 // Create waveform canvas
 const waveformCanvas = document.createElement('canvas');
@@ -42,6 +54,106 @@ waveformContainer.addEventListener('click', (e) => {
     audioPlayer.currentTime = seekTime;
     updatePlayhead();
 });
+
+// Volume control event listeners
+volumeSlider.addEventListener('input', handleVolumeChange);
+muteBtn.addEventListener('click', toggleMute);
+
+// Add toggle waveform listener
+toggleWaveformBtn.addEventListener('click', toggleWaveformSection);
+
+// Load saved volume from localStorage
+function loadVolumeSettings() {
+    const savedVolume = localStorage.getItem('djDownloaderVolume');
+    const savedMuteState = localStorage.getItem('djDownloaderMuted');
+    
+    if (savedVolume !== null) {
+        currentVolume = parseFloat(savedVolume);
+        volumeSlider.value = currentVolume * 100;
+        audioPlayer.volume = currentVolume;
+        updateVolumePercentage(currentVolume * 100);
+    }
+    
+    if (savedMuteState === 'true') {
+        isMuted = true;
+        audioPlayer.volume = 0;
+        updateMuteButtonIcon();
+    }
+}
+
+// Load saved preferences
+window.addEventListener('DOMContentLoaded', () => {
+    // Load waveform expanded state
+    const savedExpandedState = localStorage.getItem('djDownloaderWaveformExpanded');
+    if (savedExpandedState === 'true') {
+        isWaveformExpanded = true;
+        updateWaveformExpandedState();
+    }
+});
+
+// Handle volume slider change
+function handleVolumeChange() {
+    const volumeValue = volumeSlider.value / 100;
+    audioPlayer.volume = volumeValue;
+    currentVolume = volumeValue;
+    
+    // If we're adjusting volume with slider, unmute if it was muted
+    if (isMuted && volumeValue > 0) {
+        isMuted = false;
+        updateMuteButtonIcon();
+    }
+    
+    updateVolumePercentage(volumeSlider.value);
+    
+    // Save to localStorage
+    localStorage.setItem('djDownloaderVolume', volumeValue);
+    localStorage.setItem('djDownloaderMuted', isMuted);
+}
+
+// Update volume percentage display
+function updateVolumePercentage(value) {
+    volumePercentage.textContent = `${Math.round(value)}%`;
+}
+
+// Toggle mute state
+function toggleMute() {
+    isMuted = !isMuted;
+    
+    if (isMuted) {
+        previousVolume = audioPlayer.volume;
+        audioPlayer.volume = 0;
+    } else {
+        audioPlayer.volume = previousVolume;
+    }
+    
+    updateMuteButtonIcon();
+    
+    // Save to localStorage
+    localStorage.setItem('djDownloaderMuted', isMuted);
+}
+
+// Update mute button icon based on state
+function updateMuteButtonIcon() {
+    if (isMuted) {
+        muteBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <line x1="23" y1="9" x2="17" y2="15"></line>
+                <line x1="17" y1="9" x2="23" y2="15"></line>
+            </svg>
+        `;
+    } else {
+        muteBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <path d="M19 12l2-2"></path>
+                <path d="M15 12l2-2"></path>
+                <path d="M19 16l2-2"></path>
+                <path d="M15 16l2-2"></path>
+            </svg>
+        `;
+    }
+}
 
 // ### Helper Functions
 
@@ -258,11 +370,16 @@ function togglePlayPause() {
 
 // Initialize the player with new audio data
 function initPlayer(audioData) {
-    playerSection.style.display = 'block';
     document.getElementById('song-entry').style.display = 'block';
     document.getElementById('download-mp3-btn').parentElement.style.display = 'flex';
+    
+    // Update expanded state based on user preference
+    updateWaveformExpandedState();
 
     initAudioContext();
+    
+    // Load volume settings
+    loadVolumeSettings();
 
     const blob = new Blob([audioData], { type: 'audio/mpeg' });
     const audioUrl = URL.createObjectURL(blob);
@@ -313,7 +430,7 @@ document.getElementById('download-form').addEventListener('submit', function (ev
     document.getElementById('loading-spinner').style.display = 'flex';
     document.getElementById('error-msg').style.display = 'none';
     document.getElementById('results').style.display = 'none';
-    document.getElementById('player-section').style.display = 'none';
+    document.getElementById('player-section').style.display = 'block';
     document.getElementById('song-entry').style.display = 'none';
 
     // Reset UI elements from previous downloads
@@ -322,6 +439,8 @@ document.getElementById('download-form').addEventListener('submit', function (ev
     hotCues = [];
     document.getElementById('cover-preview').style.display = 'none';
     document.getElementById('cover-placeholder').style.display = 'flex';
+    document.getElementById('song-cover-preview').style.display = 'none';
+    document.getElementById('song-cover-placeholder').style.display = 'flex';
 
     // Reset audio player state
     isPlaying = false;
@@ -360,23 +479,41 @@ document.getElementById('download-form').addEventListener('submit', function (ev
             const videoId = extractYouTubeId(urlValue);
             if (videoId) {
                 const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/0.jpg`;
+                
+                // Update both cover images (main results and song entry)
                 const coverPreview = document.getElementById('cover-preview');
                 coverPreview.src = thumbnailUrl;
                 coverPreview.onload = () => {
                     coverPreview.style.display = 'block';
                     document.getElementById('cover-placeholder').style.display = 'none';
                 };
+                
+                // Also update the song entry cover image
+                const songCoverPreview = document.getElementById('song-cover-preview');
+                songCoverPreview.src = thumbnailUrl;
+                songCoverPreview.onload = () => {
+                    songCoverPreview.style.display = 'block';
+                    document.getElementById('song-cover-placeholder').style.display = 'none';
+                };
             }
 
             return response.arrayBuffer().then(buffer => ({ buffer, artist, title, bpm, key }));
         })
         .then(({ buffer, artist, title, bpm, key }) => {
+            // Update both the main results and song entry info
             document.getElementById('r-artist').textContent = artist;
             document.getElementById('r-title').textContent = title;
             document.getElementById('r-bpm').textContent = bpm;
             document.getElementById('r-key').textContent = key;
-            document.getElementById('results').style.display = 'block';
-            document.getElementById('player-section').style.display = 'block';
+            
+            // Update song entry specific info
+            document.getElementById('song-artist').textContent = artist;
+            document.getElementById('song-title').textContent = title;
+            document.getElementById('song-bpm').textContent = bpm;
+            document.getElementById('song-key').textContent = key;
+            
+            // Hide the initial results card and show only the song entry with waveform
+            document.getElementById('results').style.display = 'none';
             document.getElementById('song-entry').style.display = 'block';
             document.getElementById('loading-spinner').style.display = 'none';
 
@@ -407,3 +544,32 @@ window.addEventListener('resize', () => {
         redrawHotCueMarkers();
     }
 });
+
+// Toggle waveform visibility
+function toggleWaveformSection() {
+    isWaveformExpanded = !isWaveformExpanded;
+    updateWaveformExpandedState();
+    
+    // Save preference to localStorage
+    localStorage.setItem('djDownloaderWaveformExpanded', isWaveformExpanded);
+    
+    // Trigger resize event to redraw waveform if it's now visible
+    if (isWaveformExpanded && audioBuffer) {
+        setTimeout(() => {
+            window.dispatchEvent(new Event('resize'));
+        }, 100);
+    }
+}
+
+// Update UI based on waveform expanded state
+function updateWaveformExpandedState() {
+    if (isWaveformExpanded) {
+        playerSectionWrapper.style.display = 'block';
+        toggleWaveformBtn.classList.add('expanded');
+        toggleWaveformBtn.querySelector('.toggle-text').textContent = 'Hide Waveform';
+    } else {
+        playerSectionWrapper.style.display = 'none';
+        toggleWaveformBtn.classList.remove('expanded');
+        toggleWaveformBtn.querySelector('.toggle-text').textContent = 'Show Waveform';
+    }
+}
