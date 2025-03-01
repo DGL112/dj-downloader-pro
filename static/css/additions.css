@@ -153,23 +153,54 @@
 
 /* Notification Styles */
 .notification {
+    position: relative !important; /* Override the fixed position */
+    padding: 12px 15px; /* Extra left padding for gradient */
+    border-radius: 4px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    width: 100%; /* Fill the container width */
+    box-sizing: border-box;
+    animation: slideIn 0.3s;
+    transform: none !important; /* Override transform to prevent conflicts */
+    transition: opacity 0.3s ease-out !important;
+    opacity: 1;
+    display: flex;
+    align-items: center;
+    overflow: hidden; /* For gradient overflow containment */
+}
+
+/* Notification styling - Updated to bottom right with separate gradient box */
+#notification-container {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    background: rgba(30, 30, 30, 0.9);
-    color: white;
-    padding: 15px 20px;
-    border-radius: 8px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    display: flex;
-    align-items: center;
     z-index: 1000;
-    transform: translateX(120%);
-    transition: transform 0.3s ease-out;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 300px; /* Fixed width to ensure consistent layout */
+}
+
+/* Remove the pseudo-element gradient */
+.notification::before {
+    content: none;
+}
+
+/* Create a separate gradient box */
+.notification-gradient {
+    position: absolute;
+    left: -10px;
+    top: 0;
+    bottom: 0;
+    width: 10px;
+    background: rgba(255, 255, 255, 0.7);
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
 }
 
 .notification.show {
-    transform: translateX(0);
+    transform: none !important;
 }
 
 .notification-icon {
@@ -197,6 +228,47 @@
 .notification-close:hover {
     color: white;
     transform: scale(1.1);
+}
+
+/* Type-specific styling */
+.notification-success {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.notification-error {
+    background-color: #F44336;
+    color: white;
+}
+
+.notification-warning {
+    background-color: #FF9800;
+    color: white;
+}
+
+.notification-info {
+    background-color: #2196F3;
+    color: white;
+}
+
+/* Change animation to slide in from right */
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* Adjust animation for notifications */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Remove conflicting position styles */
+.notification-icon,
+.notification-text,
+.notification-close {
+    /* Reset any conflicting positioning */
+    position: static;
 }
 
 /* Enhanced appearance for hot cues - more colorful */

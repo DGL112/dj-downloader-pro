@@ -37,6 +37,14 @@ const NOTIFICATION_TYPES = {
 // Active notifications tracker
 let activeNotifications = [];
 
+// Track recent messages to prevent duplicates
+let recentMessages = {};
+const DEDUPLICATION_WINDOW = 10000; // Increased to 10 seconds
+const DOWNLOAD_SUCCESS_PATTERN = /track .* successfully (downloaded|analyzed)/i;
+
+// Add a flag to track notifications in process
+let notificationInProgress = false;
+
 /**
  * Initialize the notification system
  */
@@ -59,75 +67,196 @@ export function initNotifications() {
  * @param {Object} options - Additional options
  */
 export function showNotification(message, type = 'info', options = {}) {
-    // Ensure the notification container exists
-    initNotifications();
+    // Define variables at the top level of the function for proper scope
+    const now = Date.now();
+    let messageKey = null;
+    let shouldDedup = true;
     
-    const container = document.getElementById('notification-container');
-    const settings = { ...DEFAULT_SETTINGS, ...options };
-    const notifType = NOTIFICATION_TYPES[type] || NOTIFICATION_TYPES.info;
-    
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    
-    // Apply custom styling if needed
-    if (notifType.bgColor) {
-        notification.style.backgroundColor = notifType.bgColor;
-    }
-    
-    if (notifType.borderColor) {
-        notification.style.borderLeft = `4px solid ${notifType.borderColor}`;
-    }
-    
-    // Create notification content
-    notification.innerHTML = `
-        <div class="notification-icon">${notifType.icon}</div>
-        <div class="notification-text">${message}</div>
-        ${settings.closeButton ? '<button class="notification-close">&times;</button>' : ''}
-    `;
-    
-    // Add to container
-    container.appendChild(notification);
-    
-    // Generate unique ID for this notification
-    const notificationId = Date.now();
-    notification.dataset.id = notificationId;
-    
-    // Track this notification
-    activeNotifications.push({
-        id: notificationId,
-        element: notification,
-        timer: null
-    });
-    
-    // Show notification after a small delay
-    setTimeout(() => {
-        notification.classList.add('show');
-    }, 10);
-    
-    // Add close button functionality
-    if (settings.closeButton) {
-        const closeBtn = notification.querySelector('.notification-close');
-        closeBtn.addEventListener('click', () => {
-            closeNotification(notificationId);
-        });
-    }
-    
-    // Auto-remove after duration
-    if (settings.duration > 0) {
-        const timer = setTimeout(() => {
-            closeNotification(notificationId);
-        }, settings.duration);
+    // If forceShow is true, bypass all deduplication
+    if (options.forceShow) {
+        console.log('Forcing notification display:', message);
+        shouldDedup = false;
+    } else {
+        // Special case for download success messages - most aggressive filtering
+        if (type === 'success' && /track .* successfully (downloaded|analyzed)/i.test(message)) {
+            // Check global lock first
+            if (window.DJ_DOWNLOADER && window.DJ_DOWNLOADER.notificationLocks && 
+                window.DJ_DOWNLOADER.notificationLocks.downloadSuccess) {
+                console.log('BLOCKED: Download notification suppressed by global lock:', message);
+                return null;
+            }
+            
+            // Even without the lock, enforce a longer deduplication window for these
+            messageKey = 'download-success'; // Use a generic key for all download success messages
+            
+            // Use a longer window (30 seconds) for download messages
+            if (recentMessages[messageKey] && (now - recentMessages[messageKey] < 30000)) {
+                console.log('BLOCKED: Download success notification duplicated within 30 seconds');
+                return null;
+            }
+            
+            console.log('Showing download success notification:', message);
+        } else {
+            // Regular deduplication for other messages
+            const normalizedMessage = message.trim().toLowerCase();
+            const isDownloadSuccess = DOWNLOAD_SUCCESS_PATTERN.test(normalizedMessage);
+            
+            messageKey = isDownloadSuccess 
+                ? `download-success-${extractTrackName(normalizedMessage)}`
+                : `${normalizedMessage}-${type}`;
+            
+            if (recentMessages[messageKey] && (now - recentMessages[messageKey] < DEDUPLICATION_WINDOW)) {
+                console.log('Preventing duplicate notification:', message);
+                console.log('Time since last similar notification:', now - recentMessages[messageKey], 'ms');
+                console.log('Using key:', messageKey);
+                return null;
+            }
+        }
         
-        // Update the timer in our tracking object
-        const notifObj = activeNotifications.find(n => n.id === notificationId);
-        if (notifObj) {
-            notifObj.timer = timer;
+        // Check if any notification is currently being processed
+        if (notificationInProgress && !options.forceShow) {
+            console.log('Another notification is already in progress, delaying:', message);
+            // Wait a bit and try again
+            setTimeout(() => showNotification(message, type, options), 200);
+            return null;
         }
     }
     
-    // Return the notification ID so it can be closed programmatically
-    return notificationId;
+    // Flag that we're processing a notification
+    notificationInProgress = true;
+    
+    // Record this message as recently shown, but only if we have a key
+    if (messageKey && shouldDedup) {
+        recentMessages[messageKey] = now;
+    }
+    
+    // Clean up old records (more than 10 seconds old)
+    Object.keys(recentMessages).forEach(key => {
+        if (now - recentMessages[key] > 10000) {
+            delete recentMessages[key];
+        }
+    });
+    
+    try {
+        // Ensure the notification container exists
+        initNotifications();
+        
+        const container = document.getElementById('notification-container');
+        const settings = { ...DEFAULT_SETTINGS, ...options };
+        const notifType = NOTIFICATION_TYPES[type] || NOTIFICATION_TYPES.info;
+        
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        
+        // Apply custom styling if needed
+        if (notifType.bgColor) {
+            notification.style.backgroundColor = notifType.bgColor;
+        }
+        
+        if (notifType.borderColor) {
+            notification.style.borderLeft = `4px solid ${notifType.borderColor}`;
+        }
+        
+        // Create notification content with separate gradient box
+        notification.innerHTML = `
+            <div class="notification-gradient"></div>
+            <div class="notification-icon">${notifType.icon}</div>
+            <div class="notification-text">${message}</div>
+            ${settings.closeButton ? '<button class="notification-close">&times;</button>' : ''}
+        `;
+        
+        // Add to container
+        container.appendChild(notification);
+        
+        // Generate unique ID for this notification
+        const notificationId = Date.now();
+        notification.dataset.id = notificationId;
+        
+        // Track this notification
+        activeNotifications.push({
+            id: notificationId,
+            element: notification,
+            timer: null
+        });
+        
+        // Show notification with proper animation
+        setTimeout(() => {
+            notification.classList.add('show');
+            
+            // Release the lock after a short delay
+            setTimeout(() => {
+                notificationInProgress = false;
+            }, 100);
+            
+            // Ensure notifications are stacked properly
+            const index = activeNotifications.findIndex(n => n.id === notificationId);
+            if (index >= 0) {
+                // No need for manual transform - we're using CSS for this now
+            }
+        }, 10);
+        
+        // Add close button functionality
+        if (settings.closeButton) {
+            const closeBtn = notification.querySelector('.notification-close');
+            closeBtn.addEventListener('click', () => {
+                closeNotification(notificationId);
+            });
+        }
+        
+        // Auto-remove after duration
+        if (settings.duration > 0) {
+            const timer = setTimeout(() => {
+                closeNotification(notificationId);
+            }, settings.duration);
+            
+            // Update the timer in our tracking object
+            const notifObj = activeNotifications.find(n => n.id === notificationId);
+            if (notifObj) {
+                notifObj.timer = timer;
+            }
+        }
+        
+        // Return the notification ID so it can be closed programmatically
+        return notificationId;
+    } catch (error) {
+        console.error('Error showing notification:', error);
+        notificationInProgress = false; // Make sure to release the lock if there's an error
+        return null;
+    }
+}
+
+/**
+ * Extract track name from a success message for better deduplication
+ * @param {string} message - The notification message
+ * @returns {string} - The extracted track name or a hash of the message
+ */
+function extractTrackName(message) {
+    // Try to extract the track name between quotes if they exist
+    let match = message.match(/track ["'](.+?)["'] successfully/i);
+    
+    // If no quotes, try to extract the track name between "track" and "successfully"
+    if (!match) {
+        match = message.match(/track (.+?) successfully/i);
+    }
+    
+    // Return the extracted name or a simple hash of the message
+    return match ? match[1].trim() : simpleHash(message);
+}
+
+/**
+ * Generate a simple hash of a string for use as a key
+ * @param {string} str - String to hash
+ * @returns {string} - Simple hash string
+ */
+function simpleHash(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32bit integer
+    }
+    return hash.toString();
 }
 
 /**
@@ -203,26 +332,41 @@ function addBasicStyles() {
             display: flex;
             flex-direction: column;
             gap: 10px;
-            max-width: 320px;
-            width: 100%;
+            width: 300px;
+            pointer-events: none;
         }
         
         .notification {
             background: rgba(30, 30, 30, 0.9);
             color: white;
-            padding: 15px;
-            border-radius: 8px;
+            padding: 12px 15px;
+            border-radius: 4px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
             display: flex;
             align-items: center;
-            transform: translateX(120%);
-            transition: transform 0.3s ease-out;
-            opacity: 0.9;
-            border-left: 4px solid #3498db;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: auto;
+            margin-bottom: 10px;
+            width: 100%;
+            box-sizing: border-box;
+            position: relative;
+        }
+        
+        .notification-gradient {
+            position: absolute;
+            left: -10px;
+            top: 0;
+            bottom: 0;
+            width: 10px;
+            background: rgba(255, 255, 255, 0.7);
+            border-top-left-radius: 4px;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
         }
         
         .notification.show {
-            transform: translateX(0);
+            opacity: 1;
         }
         
         .notification-icon {
@@ -250,16 +394,6 @@ function addBasicStyles() {
         
         .notification-close:hover {
             color: white;
-            transform: scale(1.1);
-        }
-        
-        @media (max-width: 480px) {
-            #notification-container {
-                bottom: 10px;
-                right: 10px;
-                left: 10px;
-                max-width: none;
-            }
         }
     `;
     

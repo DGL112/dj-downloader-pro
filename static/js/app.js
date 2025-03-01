@@ -2,6 +2,35 @@
  * DJ Downloader Pro - Main Application
  */
 
+// Track download events to prevent duplicates
+let lastDownloadEvent = 0;
+const DOWNLOAD_EVENT_COOLDOWN = 5000; // 5 seconds cooldown
+
+// Global flags to prevent duplicate notifications
+window.DJ_DOWNLOADER = window.DJ_DOWNLOADER || {};
+window.DJ_DOWNLOADER.notificationLocks = {
+    downloadSuccess: false
+};
+
+// Intercept all download-related events
+document.addEventListener('click', function(event) {
+    // Check if this is a download button or similar element
+    if (event.target.matches('.download-btn, [data-action="download"], button[type="submit"]')) {
+        const now = Date.now();
+        
+        // Prevent multiple rapid download clicks
+        if (now - lastDownloadEvent < DOWNLOAD_EVENT_COOLDOWN) {
+            console.log('Preventing duplicate download event');
+            event.preventDefault();
+            event.stopPropagation();
+            return false;
+        }
+        
+        // Record this download event
+        lastDownloadEvent = now;
+    }
+}, true); // Use capture phase to intercept early
+
 // Import modules
 import { initAudioPlayer, loadAudio } from './modules/audio-player.js';
 import { initUI, showLoading, hideLoading, showError, updateDownloadProgress, updateTrackInfo, showSongEntry } from './modules/ui-controller.js';
@@ -24,6 +53,11 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Set up form submission handler
     setupFormHandler();
+
+    // Clear any existing notification locks on page load
+    window.DJ_DOWNLOADER.notificationLocks = {
+        downloadSuccess: false
+    };
 });
 
 // Setup the download form handler
@@ -52,8 +86,13 @@ function setupFormHandler() {
         }
         
         try {
-            // Show an info notification
-            notify.info('Starting download and analysis process...');
+            // Ensure these notifications work regardless of locks
+            window.DJ_DOWNLOADER.notificationLocks = {
+                downloadSuccess: false // Reset any locks when starting a new download
+            };
+            
+            // Show an info notification - don't use the lock system for info messages
+            notify.info('Starting download and analysis process...', { forceShow: true });
             
             // Start the download process
             const taskId = await startDownload(url);
@@ -197,10 +236,27 @@ async function downloadComplete(taskId) {
         hideLoading();
         showSongEntry(trackInfo);
         
-        // Show success notification
-        notify.success(`Track "${artist} - ${title}" successfully downloaded`, {
-            duration: 8000
-        });
+        // Show success notification - only if not shown recently
+        if (!window.DJ_DOWNLOADER.notificationLocks.downloadSuccess) {
+            // Set the lock to prevent duplicates
+            window.DJ_DOWNLOADER.notificationLocks.downloadSuccess = true;
+            
+            // Log that we're showing the notification
+            console.log(`Showing download success notification for ${artist} - ${title}`);
+            
+            // Changed from "successfully downloaded" to "successfully analyzed"
+            notify.success(`Track "${artist} - ${title}" successfully analyzed`, {
+                duration: 8000
+            });
+            
+            // Clear the lock after a delay
+            setTimeout(() => {
+                window.DJ_DOWNLOADER.notificationLocks.downloadSuccess = false;
+                console.log('Download notification lock cleared');
+            }, 30000); // 30 seconds lock
+        } else {
+            console.log('Suppressing duplicate download notification - lock is active');
+        }
         
         // Initialize audio player with the downloaded audio
         loadAudio(audioBlob);

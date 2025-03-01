@@ -184,6 +184,12 @@ def process_download_task(app, task_id, url):
                 'Has-Cover': 'true' if download_result.get('has_thumbnail', False) else 'false'
             }
         })
+        
+        # Send download success notification
+        send_download_success_notification({
+            'artist': download_result['artist'],
+            'title': download_result['title']
+        })
     
     except Exception as e:
         # Update status to error
@@ -193,3 +199,30 @@ def process_download_task(app, task_id, url):
             'message': f'Error: {str(e)}'
         })
         logger.error(f"Error processing task {task_id}: {str(e)}")
+
+def send_download_success_notification(track_info):
+    """
+    Send a download success notification, ensuring no duplicates.
+    
+    Args:
+        track_info (dict): Information about the downloaded track
+        
+    Returns:
+        None
+    """
+    # Format the message - use a consistent format to help client-side deduplication
+    artist = track_info.get('artist', 'Unknown Artist')
+    title = track_info.get('title', 'Unknown Title')
+    
+    # Changed message to use "analyzed" instead of "downloaded"
+    message = f'Track "{artist} - {title}" successfully analyzed'
+    
+    # Include this message in the response rather than sending a separate notification
+    return {
+        "status": "success",
+        "message": message,
+        "notification": {
+            "type": "success",
+            "text": message
+        }
+    }
