@@ -81,6 +81,18 @@ function attachEventListeners() {
     
     // Update playhead during playback
     audioPlayer.addEventListener('timeupdate', updatePlayhead);
+
+    // Add event listener for the Auto Cues button
+    if (document.getElementById('auto-cue-btn')) {
+        document.getElementById('auto-cue-btn').addEventListener('click', () => {
+            // Show a simple genre selector
+            const genre = prompt('Select genre (dnb, house, techno, hiphop, or leave blank for auto-detection):', 'auto');
+            autoSetHotCues({
+                genre: genre || 'auto',
+                clearExisting: confirm('Clear existing cue points?')
+            });
+        });
+    }
 }
 
 /**
@@ -373,4 +385,211 @@ function formatTime(seconds) {
     const minutes = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
+}
+
+/**
+ * Automatically set hot cues based on musical phrases and genre detection
+ * @param {Object} config - Configuration options
+ * @param {string} config.genre - Genre hint ('dnb', 'house', etc.) or 'auto' for detection
+ * @param {number} config.phraseLength - Number of bars per phrase (default: 16 for most genres)
+ * @param {boolean} config.clearExisting - Whether to clear existing hot cues (default: true)
+ * @param {boolean} config.includePreTransitionCues - Add cues before drops (default: true)
+ * @returns {Array} - Array of created cue IDs
+ */
+export function autoSetHotCues(config = {}) {
+    if (!audioBuffer) {
+        console.error("No audio loaded. Cannot set auto cues.");
+        return [];
+    }
+    
+    // Default configuration
+    const defaultConfig = {
+        genre: 'auto',
+        phraseLength: 16,
+        clearExisting: true,
+        includePreTransitionCues: true,
+        maxCues: 8  // Maximum number of hot cues to create
+    };
+    
+    const options = { ...defaultConfig, ...config };
+    
+    // Clear existing cues if requested
+    if (options.clearExisting) {
+        hotCues = [];
+        if (hotCuesContainer) {
+            hotCuesContainer.innerHTML = '';
+        }
+        if (hotCuesList) {
+            hotCuesList.innerHTML = '';
+        }
+    }
+    
+    // Get BPM from UI or use a sensible default
+    const bpm = parseInt(document.getElementById('song-bpm')?.textContent || '0') || 128;
+    
+    // Detect genre if set to auto
+    let genre = options.genre;
+    if (genre === 'auto') {
+        // Simple genre detection based on BPM
+        if (bpm >= 165 && bpm <= 180) {
+            genre = 'dnb';
+        } else if (bpm >= 120 && bpm <= 130) {
+            genre = 'house';
+        } else if (bpm >= 138 && bpm <= 155) {
+            genre = 'techno';
+        } else if (bpm >= 85 && bpm <= 115) {
+            genre = 'hiphop';
+        } else {
+            genre = 'other';
+        }
+    }
+    
+    // Duration in seconds
+    const duration = audioBuffer.duration;
+    
+    // Calculate beats and bars
+    const beatsPerSecond = bpm / 60;
+    const secondsPerBeat = 60 / bpm;
+    const beatsPerBar = 4; // Standard 4/4 time signature
+    const secondsPerBar = beatsPerBar * secondsPerBeat;
+    const secondsPerPhrase = options.phraseLength * secondsPerBar;
+    
+    // Calculate total number of phrases in the track
+    const totalPhrases = Math.floor(duration / secondsPerPhrase);
+    
+    // Audio analysis for detecting drops and transitions
+    const dropPositions = detectDrops(audioBuffer, bpm, genre);
+    
+    // Store created cue IDs
+    const createdCueIds = [];
+    
+    // Set cues at the beginning of each phrase (up to a reasonable limit)
+    const maxRegularPhrases = 4; // Limit regular phrase cues to avoid cluttering
+    for (let i = 0; i < Math.min(totalPhrases, maxRegularPhrases); i++) {
+        const cueTime = i * secondsPerPhrase;
+        if (cueTime < duration) {
+            const cue = createHotCue(cueTime, `Phrase ${i+1}`);
+            createdCueIds.push(cue.id);
+        }
+    }
+    
+    // For DnB tracks, set additional cues at drops and before them
+    if (genre === 'dnb') {
+        dropPositions.forEach((dropTime, index) => {
+            // Cue at the drop
+            if (dropTime < duration) {
+                const cue = createHotCue(dropTime, `Drop ${index+1}`);
+                createdCueIds.push(cue.id);
+                
+                // If requested, add cues before the drop (typically 32 bars or 2 phrases before)
+                if (options.includePreTransitionCues) {
+                    const preDropTime = Math.max(0, dropTime - (2 * secondsPerPhrase));
+                    const cue = createHotCue(preDropTime, `Pre-Drop ${index+1}`);
+                    createdCueIds.push(cue.id);
+                }
+            }
+        });
+    }
+    
+    // Ensure we haven't created too many cues
+    if (hotCues.length > options.maxCues) {
+        // Remove excess cues, keeping the most important ones
+        const excessCues = hotCues.length - options.maxCues;
+        // Find the least important cues (based on position or name)
+        const cuesToRemove = hotCues
+            .filter(cue => cue.name.startsWith('Phrase'))
+            .slice(0, excessCues);
+            
+        // Remove the excess cues
+        cuesToRemove.forEach(cue => {
+            deleteCue(cue.id);
+        });
+    }
+    
+    // Update the UI
+    updateHotCuesList();
+    
+    return createdCueIds;
+}
+
+/**
+ * Detect drops in the audio by analyzing amplitude changes
+ * 
+ * @param {AudioBuffer} buffer - The audio buffer to analyze
+ * @param {number} bpm - Beats per minute
+ * @param {string} genre - Music genre
+ * @returns {Array} - Array of drop positions in seconds
+ */
+function detectDrops(buffer, bpm, genre) {
+    // Get audio data from the first channel
+    const audioData = buffer.getChannelData(0);
+    const sampleRate = buffer.sampleRate;
+    
+    // Calculate basic audio parameters
+    const secondsPerBeat = 60 / bpm;
+    const samplesPerBeat = secondsPerBeat * sampleRate;
+    
+    // For DnB, a typical drop occurs around 16, 32, or 64 bars from the start
+    const dropPositions = [];
+    
+    if (genre === 'dnb') {
+        // Function to calculate average energy in a window
+        const getAverageEnergy = (startSample, windowSize) => {
+            let sum = 0;
+            const end = Math.min(startSample + windowSize, audioData.length);
+            for (let i = startSample; i < end; i++) {
+                sum += Math.abs(audioData[i]);
+            }
+            return sum / windowSize;
+        };
+        
+        // Typical bar positions where drops might occur in DnB
+        const potentialDropBars = [16, 32, 48, 64, 96, 128];
+        const beatsPerBar = 4;
+        
+        // Window size for energy calculation (2 beats)
+        const windowSize = samplesPerBeat * 2;
+        
+        potentialDropBars.forEach(barPosition => {
+            // Convert bar position to sample index
+            const beatPosition = barPosition * beatsPerBar;
+            const samplePosition = Math.floor(beatPosition * samplesPerBeat);
+            
+            if (samplePosition >= audioData.length) return;
+            
+            // Get energy before and after the potential drop
+            const energyBefore = getAverageEnergy(samplePosition - windowSize, windowSize);
+            const energyAfter = getAverageEnergy(samplePosition, windowSize);
+            
+            // If energy increases significantly, it's likely a drop
+            const energyRatio = energyAfter / energyBefore;
+            if (energyRatio > 1.5) {
+                // Convert sample position back to seconds
+                const dropTimeSeconds = samplePosition / sampleRate;
+                dropPositions.push(dropTimeSeconds);
+            }
+        });
+        
+        // If no drops detected with the energy method, use heuristics
+        if (dropPositions.length === 0) {
+            // For DnB, first drop often happens around 32-64 bars in
+            const firstDropBar = 32;
+            const firstDropTime = firstDropBar * beatsPerBar * secondsPerBeat;
+            
+            // Second drop often 32-64 bars after the first
+            const secondDropBar = firstDropBar + 64;
+            const secondDropTime = secondDropBar * beatsPerBar * secondsPerBeat;
+            
+            // Only add drops that are within the track duration
+            if (firstDropTime < buffer.duration) {
+                dropPositions.push(firstDropTime);
+            }
+            
+            if (secondDropTime < buffer.duration) {
+                dropPositions.push(secondDropTime);
+            }
+        }
+    }
+    
+    return dropPositions;
 }
