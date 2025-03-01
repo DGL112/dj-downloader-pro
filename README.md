@@ -12,10 +12,10 @@
 - **🎬 YouTube Integration** - Download high-quality audio from any YouTube video
 - **🔍 Intelligent Audio Analysis** - Automatic BPM and musical key detection
 - **📊 Waveform Visualization** - Interactive waveform display with precise playback control
-- **📍 Hot Cue System** - Set, manage and export cue points for DJ software
+- **🔊 Audio Visualization** - Real-time frequency analysis and visual representation
 - **📝 Metadata Management** - Automatically embeds artist, title, BPM and key information
 - **🖼️ Cover Art** - Uses YouTube thumbnails as album artwork
-- **🔄 DJ Software Export** - Compatible with Rekordbox XML format
+- **⚙️ Customizable Preferences** - Personalize your workflow with saved settings
 
 ## 🚀 Getting Started
 
@@ -40,7 +40,7 @@
 
 3. **Launch the application**
    ```bash
-   python app.py
+   python run.py
    ```
 
 4. **Access the web interface**
@@ -50,20 +50,16 @@
 
 ### Required Packages
 
-- Flask - Web framework
-- NumPy - Numerical processing
-- Librosa - Audio analysis
-- yt-dlp - YouTube downloading
-- Mutagen - Metadata handling
-- Requests - HTTP operations
+See requirements.txt for the complete list of dependencies.
 
 ## 📂 Project Structure
 
-The application is organized into a modular structure for better maintainability:
+The application follows a modular architecture:
 
 ```
 dj-downloader-pro/
-├── app.py                 # Main entry point
+├── app.py                 # App initialization
+├── run.py                 # Main entry point
 ├── modules/               # Backend Python modules
 │   ├── __init__.py
 │   ├── audio_analyzer.py  # BPM and key detection
@@ -78,10 +74,13 @@ dj-downloader-pro/
 │   │   └── additions.css  # Enhanced UI elements
 │   └── js/
 │       ├── app.js         # Main frontend application
+│       ├── player.js      # Audio player functionality
 │       └── modules/       # Frontend JavaScript modules
-│           ├── audio-player.js   # Audio playback
-│           ├── preferences.js    # User settings storage
-│           └── ui-controller.js  # UI interactions
+│           ├── audio-player.js     # Audio playback
+│           ├── audio-visualizer.js # Visual representation of audio
+│           ├── notifications.js    # User notifications
+│           ├── preferences.js      # User settings storage
+│           └── ui-controller.js    # UI interactions
 └── templates/
     └── index.html         # Main HTML template
 ```
@@ -91,42 +90,40 @@ dj-downloader-pro/
 ### Downloading Tracks
 
 1. Paste a YouTube URL in the input field
-2. Click "Download Track" 
-3. Wait for the analysis to complete
+2. Configure your desired quality and format
+3. Click "Download Track" 
+4. Wait for the analysis to complete
 
 ### Working with Audio
 
 - **Playback**: Use the transport controls to play/pause/seek
-- **Waveform**: Visualize the audio with beat grid overlay
+- **Waveform**: Visualize the audio and frequency spectrum
 - **Track Info**: View detected BPM, key, and other metadata
 
-### Managing Hot Cues
+### Managing Metadata
 
-- Click "Add Cue" to set a hot cue at the current playback position
-- Click on any hot cue marker to instantly jump to that position
-- Edit or delete hot cues from the management panel
+- Edit track metadata including artist, title, and genre
+- Preview how your tracks will appear in your music library
+- Apply metadata templates for consistent organization
 
-### Exporting
+### Customizing Preferences
 
-- **DJ Software**: Generate Rekordbox XML with all hot cues and track data
-- **Audio Files**: Download the processed MP3 with embedded metadata and artwork
+- Adjust audio analysis settings
+- Customize default download options
+- Set preferred file formats and quality settings
 
 ## 🔧 Technical Implementation
 
 - **Backend**: Flask-based Python server with modular architecture
-- **Audio Analysis**: Librosa library for BPM/key detection and waveform generation
-- **Frontend**: Modern JavaScript using ES modules for clean separation of concerns
-- **User Preferences**: Local storage for saving volume, waveform visibility settings
-- **Task Management**: Background processing with progress feedback
+- **Audio Analysis**: Librosa library for BPM/key detection
+- **Frontend**: Modern JavaScript using ES modules pattern
+- **Audio Visualization**: Real-time waveform and frequency analysis
+- **User Preferences**: Local storage for saving user settings
+- **Notifications**: User feedback system for operations
 
-## 🧩 API Endpoints
+## 🚀 Development
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/` | GET | Main application interface |
-| `/api/download` | POST | Start download process |
-| `/api/status/<task_id>` | GET | Check download status |
-| `/api/download/<task_id>` | GET | Get completed download |
+Interested in contributing? Great! Please check our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## 📜 License
 
@@ -134,9 +131,9 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🙏 Acknowledgements
 
-- [Librosa](https://librosa.org/) - Advanced audio analysis
-- [yt-dlp](https://github.com/yt-dlp/yt-dlp) - Reliable YouTube downloading
-- [Feather Icons](https://feathericons.com/) - Beautiful UI icons
+- [Librosa](https://librosa.org/) - Audio analysis
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp) - YouTube downloading
+- [Flask](https://flask.palletsprojects.com/) - Web framework
 
 ## 💬 Support
 
