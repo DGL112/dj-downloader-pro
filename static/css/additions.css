@@ -1,0 +1,255 @@
+/**
+ * New UI elements and enhancements for DJ Downloader Pro
+ */
+
+/* Progress Bar Styles */
+.progress-container {
+    width: 100%;
+    max-width: 400px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    overflow: hidden;
+    padding: 2px;
+    margin-top: 15px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+
+.progress-bar {
+    height: 8px;
+    background: linear-gradient(90deg, #3498db, #2ecc71);
+    border-radius: 8px;
+    width: 0%;
+    transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow: 0 0 6px rgba(52, 152, 219, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Animated shine effect for progress bar */
+.progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg, 
+        rgba(255, 255, 255, 0) 0%, 
+        rgba(255, 255, 255, 0.3) 50%, 
+        rgba(255, 255, 255, 0) 100%
+    );
+    animation: shine 2s infinite;
+}
+
+@keyframes shine {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+.progress-label {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.85em;
+    text-align: center;
+    margin-top: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+/* Pill-shaped status indicator */
+.status-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 10px;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.status-pill.analyzing {
+    background: linear-gradient(90deg, #f39c12, #e67e22);
+    color: white;
+}
+
+.status-pill.downloading {
+    background: linear-gradient(90deg, #3498db, #2980b9);
+    color: white;
+}
+
+.status-pill.processing {
+    background: linear-gradient(90deg, #9b59b6, #8e44ad);
+    color: white;
+}
+
+.status-pill.completed {
+    background: linear-gradient(90deg, #2ecc71, #27ae60);
+    color: white;
+}
+
+.status-pill.error {
+    background: linear-gradient(90deg, #e74c3c, #c0392b);
+    color: white;
+}
+
+/* Enhanced volume control with better slider */
+.volume-slider {
+    height: 5px;
+    background: linear-gradient(to right, #3498db 0%, #3498db 80%, rgba(255,255,255,0.2) 80%);
+    border-radius: 3px;
+}
+
+/* New Tooltip Styles */
+.tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltip .tooltip-text {
+    visibility: hidden;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    text-align: center;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    
+    /* Position the tooltip */
+    position: absolute;
+    z-index: 100;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    
+    /* Fade effect */
+    opacity: 0;
+    transition: opacity 0.3s;
+    
+    /* Ensure it's not too wide */
+    min-width: 80px;
+    max-width: 200px;
+    white-space: nowrap;
+}
+
+.tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Arrow for tooltip */
+.tooltip .tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
+}
+
+/* Notification Styles */
+.notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(30, 30, 30, 0.9);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    z-index: 1000;
+    transform: translateX(120%);
+    transition: transform 0.3s ease-out;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification-icon {
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.notification-text {
+    font-size: 0.95em;
+    margin-right: 20px;
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    padding: 2px;
+    margin-left: auto;
+    font-size: 1.2em;
+    line-height: 1;
+    transition: all 0.2s;
+}
+
+.notification-close:hover {
+    color: white;
+    transform: scale(1.1);
+}
+
+/* Enhanced appearance for hot cues - more colorful */
+.hot-cue-marker {
+    position: absolute;
+    width: 3px;
+    height: 100%;
+    background-color: #f39c12;
+    z-index: 3;
+    box-shadow: 0 0 10px rgba(243, 156, 18, 0.5);
+}
+
+.hot-cue-marker::before {
+    content: attr(data-cue);
+    position: absolute;
+    top: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: bold;
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+}
+
+.hot-cue-marker:nth-child(3n+1) {
+    background-color: #e74c3c;
+}
+
+.hot-cue-marker:nth-child(3n+1)::before {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+.hot-cue-marker:nth-child(3n+2) {
+    background-color: #2ecc71;
+}
+
+.hot-cue-marker:nth-child(3n+2)::before {
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+}
+
+/* More colorful beat grid markers for better visibility */
+.beat-marker:nth-child(4n+1) {
+    background-color: rgba(52, 152, 219, 0.4);
+    box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+}
+
+/* Enhanced playhead with glow effect */
+.playhead {
+    box-shadow: 0 0 10px rgba(231, 76, 60, 0.6);
+}

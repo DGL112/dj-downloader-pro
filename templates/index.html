@@ -8,6 +8,7 @@
     <!-- For Web Audio API support in older browsers -->
     <script src="https://cdn.jsdelivr.net/npm/webrtc-adapter@8.1.1/out/adapter.min.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/additions.css') }}">
 </head>
 <body>
     <div class="container">
@@ -292,6 +293,6 @@
     <audio id="audio-player" style="display: none;"></audio>
     
     <!-- Load JavaScript -->
-    <script src="{{ url_for('static', filename='js/player.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

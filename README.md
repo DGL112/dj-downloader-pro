@@ -57,6 +57,35 @@
 - Mutagen - Metadata handling
 - Requests - HTTP operations
 
+## 📂 Project Structure
+
+The application is organized into a modular structure for better maintainability:
+
+```
+dj-downloader-pro/
+├── app.py                 # Main entry point
+├── modules/               # Backend Python modules
+│   ├── __init__.py
+│   ├── audio_analyzer.py  # BPM and key detection
+│   ├── config.py          # Application configuration
+│   ├── download_manager.py # Task management
+│   ├── metadata_handler.py # ID3 tag handling
+│   ├── routes.py          # API endpoints
+│   └── youtube_downloader.py # YouTube integration
+├── static/
+│   ├── css/
+│   │   ├── styles.css     # Main styles
+│   │   └── additions.css  # Enhanced UI elements
+│   └── js/
+│       ├── app.js         # Main frontend application
+│       └── modules/       # Frontend JavaScript modules
+│           ├── audio-player.js   # Audio playback
+│           ├── preferences.js    # User settings storage
+│           └── ui-controller.js  # UI interactions
+└── templates/
+    └── index.html         # Main HTML template
+```
+
 ## 🎮 How to Use
 
 ### Downloading Tracks
@@ -84,10 +113,20 @@
 
 ## 🔧 Technical Implementation
 
-- **Backend**: Flask-based Python server handling downloads and analysis
+- **Backend**: Flask-based Python server with modular architecture
 - **Audio Analysis**: Librosa library for BPM/key detection and waveform generation
-- **Frontend**: Modern JavaScript with Web Audio API for playback and visualization
-- **Data Processing**: FFmpeg for audio conversion and metadata embedding
+- **Frontend**: Modern JavaScript using ES modules for clean separation of concerns
+- **User Preferences**: Local storage for saving volume, waveform visibility settings
+- **Task Management**: Background processing with progress feedback
+
+## 🧩 API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | Main application interface |
+| `/api/download` | POST | Start download process |
+| `/api/status/<task_id>` | GET | Check download status |
+| `/api/download/<task_id>` | GET | Get completed download |
 
 ## 📜 License
 
