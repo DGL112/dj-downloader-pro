@@ -90,12 +90,21 @@ def main():
         # Open browser after a short delay
         def open_browser():
             sleep(1)
-            webbrowser.open(f"http://{app.config['HOST']}:{app.config['PORT']}")
+            # Use localhost instead of 0.0.0.0 for browser access
+            browser_host = "localhost" if app.config['HOST'] == "0.0.0.0" else app.config['HOST']
+            url = f"http://{browser_host}:{app.config['PORT']}"
+            print(f"📱 Opening browser at {url}")
+            webbrowser.open(url)
         
-        from threading import Thread
-        browser_thread = Thread(target=open_browser)
-        browser_thread.daemon = True
-        browser_thread.start()
+        # Only open browser if not in debug mode or if this is the main Flask process
+        # This prevents opening browser twice when debug=True
+        should_open_browser = not app.config['DEBUG'] or os.environ.get('WERKZEUG_RUN_MAIN') == 'true'
+        
+        if should_open_browser:
+            from threading import Thread
+            browser_thread = Thread(target=open_browser)
+            browser_thread.daemon = True
+            browser_thread.start()
         
         # Start the app
         app.run(debug=app.config['DEBUG'], host=app.config['HOST'], port=app.config['PORT'])
