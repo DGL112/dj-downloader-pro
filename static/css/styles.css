@@ -289,16 +289,16 @@ button:active {
 /* Improved layout with exact alignment */
 .results-layout {
     display: grid;
-    grid-template-columns: 100px 1fr; /* Reduced from 130px to compact */
-    gap: 15px; /* Reduced from 20px */
-    margin-bottom: 15px; /* Reduced from 20px */
+    grid-template-columns: 120px 1fr; /* Increased from 100px to give more space */
+    gap: 20px; /* Increased from 15px to ensure no overlap */
+    margin-bottom: 15px;
     align-items: start;
 }
 
 /* Enhanced cover art styling */
 .cover-art {
-    width: 100px; /* Reduced from 130px */
-    height: 100px; /* Reduced from 130px */
+    width: 120px; /* Reduced from 130px */
+    height: 120px; /* Reduced from 130px */
     border-radius: 10px;
     overflow: hidden;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
@@ -330,10 +330,10 @@ button:active {
 
 /* Refined info grid with consistent spacing */
 .info-grid {
+    width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 8px; /* Reduced from 12px */
-    width: 100%;
+    gap: 10px; /* Updated from 8px for better spacing */
 }
 
 /* Improved info items with exact sizing */
@@ -379,21 +379,22 @@ button:active {
     word-wrap: break-word;
     line-height: 1.2;
     color: rgba(255, 255, 255, 0.95);
+    word-break: break-word; /* Allow long titles to wrap */
+    overflow-wrap: break-word;
 }
 
 /* Enhanced metrics row with perfect alignment */
 .metrics-row {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px; /* Reduced from 12px */
-    margin-top: 10px; /* Reduced from 12px */
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
 }
 
 .metrics-row .info-item {
-    min-height: 60px; /* Reduced from 72px */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    flex: 1;
+    min-width: 90px;
 }
 
 /* Improved download info */
@@ -432,6 +433,7 @@ button:active {
     animation: slideUp 0.5s ease-out;
     border-left: 4px solid #3498db;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    margin-top: 10px;
 }
 
 /* Songs Container */
@@ -453,6 +455,8 @@ button:active {
     flex: 0 0 280px; /* Reduced from 300px to give more space to waveform */
     min-width: 250px; /* Reduced from 280px */
     max-width: 100%;
+    width: 100%;
+    display: block;
 }
 
 /* Waveform Container */
@@ -717,6 +721,7 @@ button:active {
     justify-content: flex-start;
     margin-bottom: 15px; /* Reduced from 20px */
     width: 100%;
+    margin: 10px 0 15px 0;
 }
 
 .download-btn {
@@ -834,13 +839,13 @@ button:active {
 
 @media (max-width: 700px) { /* Changed from 550px */
     .results-layout {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr; /* Stack vertically on mobile */
         gap: 15px;
     }
     .cover-art {
-        width: 100%;
-        height: 180px;
-        margin-bottom: 5px;
+        width: 150px; /* Keep reasonable size even on mobile */
+        height: 150px;
+        margin: 0 auto 15px auto; /* Center the album art */
     }
     .form-group input, button {
         font-size: 0.95em;
@@ -898,18 +903,22 @@ button:active {
     gap: 20px;
     width: 100%;
     align-items: flex-start; /* Ensure proper vertical alignment */
+    flex-direction: column;
 }
 
 .track-info-section {
-    flex: 0 0 280px; /* Reduced from 300px to give more space to waveform */
-    min-width: 250px; /* Reduced from 280px */
-    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
 }
 
 .player-section-wrapper {
     flex: 1;
     display: none;
     animation: fadeIn 0.3s ease-out;
+    width: 100%;
+    margin-top: 10px; /* Add additional space above the waveform */
 }
 
 @keyframes fadeIn {
@@ -923,17 +932,24 @@ button:active {
     align-items: center;
     gap: 10px;
     margin-top: 15px; /* Reduced from 20px */
+    margin-bottom: 20px; /* Add space after the button */
     padding: 10px 14px; /* Reduced from 12px 16px */
-    background: rgba(20, 20, 20, 0.4);
+    background: rgba(20, 20, 20, 0.7);
     border-radius: 10px;
     cursor: pointer;
     transition: all 0.3s ease;
     border-left: 2px solid rgba(52, 152, 219, 0.4);
+    width: 100%;
+    text-align: center;
+    justify-content: center;
 }
 
 .toggle-waveform-btn:hover {
+    background: rgba(52, 152, 219, 0.2);
+}
+
+.toggle-waveform-btn.expanded {
     background: rgba(52, 152, 219, 0.15);
-    transform: translateY(-2px);
 }
 
 .toggle-icon {
@@ -956,4 +972,264 @@ button:active {
     height: 100%;
     object-fit: cover;
     display: none;
+}
+
+/* NEW STYLES - Added for layout optimization */
+
+/* Improve the track info layout */
+.track-info-section {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+}
+
+/* Create a better grid layout for metrics and download button */
+.track-metrics-download {
+    display: grid;
+    grid-template-columns: 1fr 1fr 2fr;
+    gap: 10px;
+    align-items: stretch;
+    margin-bottom: 15px;
+}
+
+/* Adjust the metrics to fit in the grid */
+.track-metrics-download .info-item {
+    margin: 0;
+    height: 100%;
+}
+
+/* Style the download button to match the grid */
+.download-options {
+    margin: 0 !important;
+    height: 100%;
+}
+
+.download-options .download-btn {
+    height: 100%;
+    margin: 0;
+    white-space: nowrap;
+}
+
+/* Add a cleaner container for the toggle button */
+.toggle-waveform-container {
+    margin-top: 5px;
+}
+
+/* Make the toggle button more attractive */
+.toggle-waveform-btn {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    border-left: none;
+    background: rgba(30, 30, 30, 0.4);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.toggle-waveform-btn:hover {
+    background: rgba(52, 152, 219, 0.25);
+}
+
+.toggle-waveform-btn.expanded {
+    background: rgba(52, 152, 219, 0.15);
+}
+
+/* Add divider when waveform is hidden for better visual separation */
+.content-divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.1), transparent);
+    margin: 15px 0;
+    display: none;
+    width: 100%;
+}
+
+.waveform-hidden .content-divider {
+    display: block;
+}
+
+/* Add visual enhancements to the song card when waveform is hidden */
+.waveform-hidden.song-entry {
+    background: linear-gradient(145deg, rgba(25, 25, 25, 0.7), rgba(30, 30, 30, 0.7));
+}
+
+/* Make the cover art slightly larger when waveform is hidden */
+.waveform-hidden .cover-art {
+    width: 120px;
+    height: 120px;
+    transition: all 0.3s ease;
+}
+
+/* Add subtle animations when toggling waveform */
+.song-entry {
+    transition: background 0.3s ease;
+}
+
+.results-layout, .info-grid, .metrics-row {
+    transition: all 0.3s ease;
+}
+
+/* Add some shadow to make elements pop more */
+.info-item, .download-btn, .toggle-waveform-btn {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Media query adjustments for the new grid layout */
+@media (max-width: 700px) {
+    .track-metrics-download {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .download-options {
+        grid-column: span 2;
+    }
+}
+
+/* Ensure proper display of the player section */
+.player-section-wrapper {
+    width: 100%;
+}
+
+/* Make the nested elements stack better */
+.song-entry > * {
+    width: 100%;
+}
+
+/* Container for toggle button with proper spacing */
+.toggle-waveform-container {
+    margin-top: 15px;
+    position: relative;
+}
+
+/* Visual separator below toggle button */
+.toggle-separator {
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.1), transparent);
+    margin: 15px 0 5px 0;
+    width: 100%;
+    display: none; /* Only show when waveform is expanded */
+}
+
+/* Show separator when waveform is expanded */
+.toggle-waveform-btn.expanded + .toggle-separator {
+    display: block;
+}
+
+/* Top separator for waveform section */
+.waveform-top-separator {
+    height: 4px; /* Slightly thicker for visual distinction */
+    width: 100%;
+    background: rgba(20, 20, 20, 0.4);
+    border-radius: 4px 4px 0 0;
+}
+
+/* Fix layout for metrics row to avoid overlap */
+.metrics-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px; /* Increased gap */
+    margin: 15px 0; /* Consistent margins */
+}
+
+.metrics-row .info-item {
+    flex: 1;
+    min-width: 90px;
+}
+
+/* Ensure Download button has proper spacing */
+.download-options {
+    margin: 15px 0;
+    width: 100%;
+}
+
+/* Fix for mobile layout */
+@media (max-width: 700px) {
+    .metrics-row {
+        flex-direction: row; /* Keep side by side even on mobile */
+        flex-wrap: wrap;
+    }
+    
+    .metrics-row .info-item {
+        flex-basis: calc(50% - 8px); /* Half width minus gap */
+        min-width: 120px;
+    }
+}
+
+/* CRITICAL FIX: Ensure proper spacing between elements */
+.track-info-section > * {
+    margin-bottom: 15px;
+}
+
+.track-info-section > *:last-child {
+    margin-bottom: 0;
+}
+
+/* Make album art slightly larger for better visibility */
+.cover-art {
+    width: 120px;
+    height: 120px;
+}
+
+/* Ensure the waveform has proper padding */
+.player-section {
+    padding: 20px;
+    margin-top: 10px;
+}
+
+/* Additional visual separators */
+.section-separator {
+    height: 2px;
+    background: linear-gradient(to right, rgba(52, 152, 219, 0.1), rgba(52, 152, 219, 0.3), rgba(52, 152, 219, 0.1));
+    width: 100%;
+    margin: 20px 0;
+    border-radius: 2px;
+}
+
+.content-divider-vertical {
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.1), transparent);
+    height: 100%;
+    margin: 0 15px;
+    display: none;
+}
+
+@media (min-width: 851px) {
+    .has-sidebar .content-divider-vertical {
+        display: block;
+    }
+}
+
+/* Subtle separator for song entries */
+.song-entry:not(:last-child):after {
+    content: '';
+    display: block;
+    height: 2px;
+    background: linear-gradient(to right, transparent, rgba(52, 152, 219, 0.2), transparent);
+    width: 80%;
+    margin: 30px auto 0;
+}
+
+/* Separator for groups of related controls */
+.controls-group {
+    position: relative;
+    padding-bottom: 15px;
+}
+
+.controls-group:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 10%;
+    width: 80%;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Card separator - subtle inner shadow */
+.card-separator {
+    height: 1px;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    margin: 15px 0;
+    width: 100%;
 }

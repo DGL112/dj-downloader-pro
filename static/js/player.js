@@ -87,7 +87,34 @@ window.addEventListener('DOMContentLoaded', () => {
     const savedExpandedState = localStorage.getItem('djDownloaderWaveformExpanded');
     if (savedExpandedState === 'true') {
         isWaveformExpanded = true;
-        updateWaveformExpandedState();
+    } else {
+        isWaveformExpanded = false;
+    }
+    
+    // Initialize UI based on expanded state
+    const songEntry = document.getElementById('song-entry');
+    if (songEntry) {
+        if (!isWaveformExpanded) {
+            songEntry.classList.add('waveform-hidden');
+        } else {
+            songEntry.classList.remove('waveform-hidden');
+        }
+    }
+    
+    // Make sure player section wrapper is initially hidden if waveform is not expanded
+    if (playerSectionWrapper) {
+        playerSectionWrapper.style.display = isWaveformExpanded ? 'block' : 'none';
+    }
+    
+    // Update toggle button text
+    if (toggleWaveformBtn) {
+        if (isWaveformExpanded) {
+            toggleWaveformBtn.classList.add('expanded');
+            toggleWaveformBtn.querySelector('.toggle-text').textContent = 'Hide Waveform';
+        } else {
+            toggleWaveformBtn.classList.remove('expanded');
+            toggleWaveformBtn.querySelector('.toggle-text').textContent = 'Show Waveform';
+        }
     }
 });
 
@@ -370,11 +397,19 @@ function togglePlayPause() {
 
 // Initialize the player with new audio data
 function initPlayer(audioData) {
-    document.getElementById('song-entry').style.display = 'block';
+    const songEntry = document.getElementById('song-entry');
+    songEntry.style.display = 'block';
     document.getElementById('download-mp3-btn').parentElement.style.display = 'flex';
     
     // Update expanded state based on user preference
     updateWaveformExpandedState();
+    
+    // Add waveform-hidden class if waveform is not expanded
+    if (!isWaveformExpanded && songEntry) {
+        songEntry.classList.add('waveform-hidden');
+    } else if (songEntry) {
+        songEntry.classList.remove('waveform-hidden');
+    }
 
     initAudioContext();
     
@@ -422,6 +457,47 @@ function initPlayer(audioData) {
         a.click();
         document.body.removeChild(a);
     });
+}
+
+// Update waveform expanded state with new class-based approach
+function updateWaveformExpandedState() {
+    const songEntry = document.getElementById('song-entry');
+    
+    if (isWaveformExpanded) {
+        playerSectionWrapper.style.display = 'block';
+        toggleWaveformBtn.classList.add('expanded');
+        toggleWaveformBtn.querySelector('.toggle-text').textContent = 'Hide Waveform';
+        
+        // Remove the waveform-hidden class when expanded
+        if (songEntry) {
+            songEntry.classList.remove('waveform-hidden');
+        }
+    } else {
+        playerSectionWrapper.style.display = 'none';
+        toggleWaveformBtn.classList.remove('expanded');
+        toggleWaveformBtn.querySelector('.toggle-text').textContent = 'Show Waveform';
+        
+        // Add waveform-hidden class when collapsed
+        if (songEntry) {
+            songEntry.classList.add('waveform-hidden');
+        }
+    }
+}
+
+// Enhanced toggle function
+function toggleWaveformSection() {
+    isWaveformExpanded = !isWaveformExpanded;
+    updateWaveformExpandedState();
+    
+    // Save preference to localStorage
+    localStorage.setItem('djDownloaderWaveformExpanded', isWaveformExpanded);
+    
+    // Trigger resize event to redraw waveform if it's now visible
+    if (isWaveformExpanded && audioBuffer) {
+        setTimeout(() => {
+            window.dispatchEvent(new Event('resize'));
+        }, 100);
+    }
 }
 
 // Handle form submission for downloading a new song
@@ -544,32 +620,3 @@ window.addEventListener('resize', () => {
         redrawHotCueMarkers();
     }
 });
-
-// Toggle waveform visibility
-function toggleWaveformSection() {
-    isWaveformExpanded = !isWaveformExpanded;
-    updateWaveformExpandedState();
-    
-    // Save preference to localStorage
-    localStorage.setItem('djDownloaderWaveformExpanded', isWaveformExpanded);
-    
-    // Trigger resize event to redraw waveform if it's now visible
-    if (isWaveformExpanded && audioBuffer) {
-        setTimeout(() => {
-            window.dispatchEvent(new Event('resize'));
-        }, 100);
-    }
-}
-
-// Update UI based on waveform expanded state
-function updateWaveformExpandedState() {
-    if (isWaveformExpanded) {
-        playerSectionWrapper.style.display = 'block';
-        toggleWaveformBtn.classList.add('expanded');
-        toggleWaveformBtn.querySelector('.toggle-text').textContent = 'Hide Waveform';
-    } else {
-        playerSectionWrapper.style.display = 'none';
-        toggleWaveformBtn.classList.remove('expanded');
-        toggleWaveformBtn.querySelector('.toggle-text').textContent = 'Show Waveform';
-    }
-}
