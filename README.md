@@ -1,7 +1,3 @@
-DGL112: @workspace Write the README.md file using the current workspace in markdown format
-
-Workspace: Collecting workspace information# DJ Downloader Pro
-
 A web application that helps DJs download tracks from YouTube with automatic BPM and musical key detection. The app includes a waveform player with beat grid visualization and hot cue functionality, making it easier to prepare tracks for DJ sets.
 
 ![DJ Downloader Pro Interface](https://via.placeholder.com/800x450.png?text=DJ+Downloader+Pro)
