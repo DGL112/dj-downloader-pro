@@ -124,7 +124,20 @@ export function loadAudio(audioData) {
     
     // Reset playback state
     isPlaying = false;
+    
+    // Clear hot cues array
     hotCues = [];
+    
+    // Clear visual hot cue markers
+    if (hotCuesContainer) {
+        hotCuesContainer.innerHTML = '';
+    }
+    
+    // Clear hot cues list
+    if (hotCuesList) {
+        hotCuesList.innerHTML = '';
+    }
+    
     updatePlayPauseButton();
 }
 
